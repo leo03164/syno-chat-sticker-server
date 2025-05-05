@@ -1,0 +1,13 @@
+{
+  "dependencies": {
+    "@elysiajs/cors": "^1.2.0",
+    "@elysiajs/swagger": "^1.2.2",
+    "adm-zip": "^0.5.16",
+    "dotenv": "^16.5.0",
+    "elysia": "^1.2.25",
+    "pg": "^8.15.6"
+  },
+  "devDependencies": {
+    "@types/node": "^22.14.1"
+  }
+}

@@ -1,0 +1,49 @@
+services:
+  bun:
+    image: oven/bun:latest
+    container_name: chat-sticker-server
+    volumes:
+      - .:/app
+    working_dir: /app
+    command: sh -c "while true; do sleep 3600; done"
+    env_file:
+      - .env
+    ports:
+      - "${PORT}:${PORT}"
+    networks:
+      - _devnetwork_
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.chat-sticker-server.rule=Host(`${DOMAIN}`)"
+      # - "traefik.http.routers.chat-sticker-server.tls=true"
+      - "traefik.http.services.chat-sticker-server.loadbalancer.server.port=${PORT}"
+    depends_on:
+      - postgres
+
+  postgres:
+    image: postgres:17.4-alpine
+    container_name: chat-sticker-postgres
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-postgres}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-postgres}
+      POSTGRES_DB: ${POSTGRES_DB:-chat_sticker}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"
+    networks:
+      - _devnetwork_
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+networks:
+  _devnetwork_:
+    external: true
+
+volumes:
+  postgres_data:
+
+    
