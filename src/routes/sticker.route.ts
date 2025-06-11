@@ -1,14 +1,32 @@
-import { Elysia } from 'elysia';
-import { getSticker, uploadStickersController } from '../controllers/sticker.controller';
+import { Elysia, t } from 'elysia';
+import { 
+  getStickersController,
+  uploadStickersController,
+  getStickerFileController,
+  uploadStickersToHackMDController
+} from '../controllers/sticker.controller';
 
-export const stickerRoute = new Elysia({ prefix: '/sticker' })
-  .get('/', () => 'Hello World')
-  .get('/:id', async ({ params: { id }, set }) => {
-    const sticker = await getSticker(id);
-    if (!sticker) {
-      set.status = 404;
-      return { error: 'Sticker not found' };
-    }
-    return sticker;
+export const stickerRoute = new Elysia({ prefix: '/stickers' })
+  .get('/', getStickersController, {
+    query: t.Object({
+      seriesId: t.Optional(t.String()),
+      stickerId: t.Optional(t.String())
+    })
   })
-  .post('/upload', uploadStickersController);
+  .get('/:id', getStickerFileController, {
+    params: t.Object({
+      id: t.String()
+    })
+  })
+  .post('/upload', uploadStickersController, {
+    body: t.Object({
+      record: t.File(),
+      files: t.Array(t.File())
+    })
+  })
+  .post('/upload/hackmd', uploadStickersToHackMDController, {
+    body: t.Object({
+      record: t.File(),
+      files: t.Array(t.File())
+    })
+  });
