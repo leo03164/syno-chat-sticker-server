@@ -1,6 +1,6 @@
 services:
   bun:
-    image: oven/bun:latest
+    image: oven/bun:1.2.16
     container_name: chat-sticker-server
     volumes:
       - .:/app
@@ -8,29 +8,28 @@ services:
     command: sh -c "while true; do sleep 3600; done"
     env_file:
       - .env
-    ports:
-      - "${PORT}:${PORT}"
     networks:
       - _devnetwork_
     labels:
       - "traefik.enable=true"
       - "traefik.http.routers.chat-sticker-server.rule=Host(`${DOMAIN}`)"
-      # - "traefik.http.routers.chat-sticker-server.tls=true"
+      - "traefik.http.routers.chat-sticker-server.entrypoints=websecure"
+      - "traefik.http.routers.chat-sticker-server.tls=true"
       - "traefik.http.services.chat-sticker-server.loadbalancer.server.port=${PORT}"
     depends_on:
       - postgres
 
   postgres:
     image: postgres:17.4-alpine
-    container_name: chat-sticker-postgres
+    container_name: ${POSTGRES_HOST}
     environment:
-      POSTGRES_USER: ${POSTGRES_USER:-postgres}
-      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-postgres}
-      POSTGRES_DB: ${POSTGRES_DB:-chat_sticker}
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: ${POSTGRES_DB}
     volumes:
       - postgres_data:/var/lib/postgresql/data
-    ports:
-      - "5432:5432"
+    expose:
+      - "5432"
     networks:
       - _devnetwork_
     healthcheck:
