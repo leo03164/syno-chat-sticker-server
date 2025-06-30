@@ -1,6 +1,6 @@
 import { createInsertSchema, createSelectSchema } from 'drizzle-typebox'
-import { tags } from '../db/schema'
-import { ApiResponse } from '../types'
+import { tags } from '../../db/schema'
+import { ApiResponse } from '../../types'
 
 // Schema 定義
 export const insertSchema = createInsertSchema(tags)

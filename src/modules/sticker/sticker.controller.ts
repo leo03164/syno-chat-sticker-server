@@ -1,9 +1,9 @@
-import { StickerService } from '../services/sticker.service';
+import { StickerService } from './sticker.service';
 import { Context } from 'elysia';
-import { StickerResponse } from '../models/sticker.model';
+import { StickerResponse } from './sticker.model';
 import { readFileSync } from 'fs';
 import { join } from 'path';
-import { SeriesService } from '../services/series.service';
+import { SeriesService } from '../series/series.service';
 
 const stickerService = new StickerService();
 

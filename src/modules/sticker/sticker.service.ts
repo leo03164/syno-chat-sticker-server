@@ -1,11 +1,11 @@
-import { db } from '../db/index'
-import { stickers, tags, stickerTags, series } from '../db/schema'
+import { db } from '../../db/index'
+import { stickers, tags, stickerTags, series } from '../../db/schema'
 import { eq, and, SQL } from 'drizzle-orm'
-import { Sticker } from '../models/sticker.model'
+import { Sticker } from './sticker.model'
 import { createHash } from 'crypto'
 import { join } from 'path'
 import { existsSync, mkdirSync, writeFileSync } from 'fs'
-import { StickerRecord } from '../types'
+import { StickerRecord } from '../../types'
 import { FileValidatorService } from './file-validator.service'
 import { HackmdService } from './hackmd.service'
 
@@ -58,6 +58,7 @@ export class StickerService {
         const hashPrefix = hash.slice(0, 5)
         const path = await processFileUpload(file, hash, hashPrefix)
 
+        // TODO: 需要確認一下這邊邏輯
         // 檢查並創建 series（如果不存在）
         let seriesRecord = await db.select().from(series).where(eq(series.id, record.series))
         if (!seriesRecord[0]) {

@@ -1,9 +1,9 @@
-import { SeriesService } from '../services/series.service'
+import { SeriesService } from './series.service'
 import { Context } from 'elysia'
 import { 
   SeriesResponse, 
   SeriesListResponse,
-} from '../models/series.model'
+} from './series.model'
 
 const seriesService = new SeriesService()
 

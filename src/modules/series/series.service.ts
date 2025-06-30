@@ -1,7 +1,7 @@
-import { db } from '../db/index';
+import { db } from '../../db/index';
 import { eq } from 'drizzle-orm';
-import { series } from '../db/schema';
-import { Series } from '../models/series.model';
+import { series } from '../../db/schema';
+import { Series } from './series.model';
 
 export class SeriesService {
   // 獲取所有系列

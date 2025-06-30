@@ -4,7 +4,7 @@ import {
   uploadStickersController,
   getStickerFileController,
   uploadStickersToHackMDController
-} from '../controllers/sticker.controller';
+} from '../modules/sticker/sticker.controller';
 
 export const stickerRoute = new Elysia({ prefix: '/stickers' })
   .get('/', getStickersController, {
