@@ -129,7 +129,7 @@ export class StickerService {
         const hash = createHash('sha256').update(buffer).digest('hex')
         
         // 上傳到 HackMD
-        const hackmdResult = await HackmdService.uploadImage(file)
+        const hackmdResult = await HackmdService.uploadImageByMinIO(file, hash)
         const path = hackmdResult.link
 
         // 檢查並創建 series（如果不存在）
