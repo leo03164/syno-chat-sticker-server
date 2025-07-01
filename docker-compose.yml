@@ -13,8 +13,8 @@ services:
     labels:
       - "traefik.enable=true"
       - "traefik.http.routers.chat-sticker-server.rule=Host(`${DOMAIN}`)"
-      - "traefik.http.routers.chat-sticker-server.entrypoints=websecure"
-      - "traefik.http.routers.chat-sticker-server.tls=true"
+      - "traefik.http.routers.chat-sticker-server.entrypoints=web"
+      - "traefik.http.routers.chat-sticker-server.tls=false"
       - "traefik.http.services.chat-sticker-server.loadbalancer.server.port=${PORT}"
     depends_on:
       - postgres
