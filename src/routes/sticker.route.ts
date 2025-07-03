@@ -5,6 +5,8 @@ import {
   uploadStickersToMinIOController
 } from '../modules/sticker/sticker.controller';
 import { FileUploadValidatorMiddleware } from '../middleware/file-upload-validator.middleware';
+import { RateLimiterMiddleware } from '../middleware/rate-limiter.middleware';
+import { getRateLimitConfig } from '../config/rate-limit.config';
 
 export const stickerRoute = new Elysia({ prefix: '/stickers' })
   .get('/', getStickersController, {
@@ -13,6 +15,17 @@ export const stickerRoute = new Elysia({ prefix: '/stickers' })
       stickerId: t.Optional(t.String())
     })
   })
+  .get('/rate-limit/status', ({ request, query }) => {
+    const endpoint = query.endpoint as string;
+    return RateLimiterMiddleware.getRateLimitStatus(request, endpoint);
+  }, {
+    query: t.Object({
+      endpoint: t.Optional(t.String())
+    })
+  })
+  .get('/rate-limit/config', () => {
+    return getRateLimitConfig('upload');
+  })
   .get('/:seriesId/:stickerId', getStickerFileController, {
     params: t.Object({
       seriesId: t.String(),
@@ -20,7 +33,10 @@ export const stickerRoute = new Elysia({ prefix: '/stickers' })
     })
   })
   .post('/upload/hackmd', uploadStickersToMinIOController, {
-    beforeHandle: FileUploadValidatorMiddleware.validateFileUpload,
+    beforeHandle: [
+      RateLimiterMiddleware.createRateLimiterForEndpoint('upload'),
+      FileUploadValidatorMiddleware.validateFileUpload
+    ],
     body: t.Object({
       record: t.File(),
       files: t.Array(t.File())
