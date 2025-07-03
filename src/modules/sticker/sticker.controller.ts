@@ -69,7 +69,7 @@ export const uploadStickersToMinIOController = async ({ body, set }: Context): P
     const seriesService = new SeriesService();
     const series = await seriesService.createSeries();
 
-    const result = await stickerService.uploadStickersToHackMD(recordFile, filesMap, series.id);
+    const result = await stickerService.uploadStickersToMinIO(recordFile, filesMap, series.id);
     if (!result.success) {
       set.status = 400;
       return result;

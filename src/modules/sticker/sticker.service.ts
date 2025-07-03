@@ -21,7 +21,7 @@ export class StickerService {
   }
 
   // 批次上傳貼圖到 MinIO
-  async uploadStickersToHackMD(recordFile: File, filesMap: Record<string, File>, seriesId: string): Promise<{ success: boolean; error?: string }> {
+  async uploadStickersToMinIO(recordFile: File, filesMap: Record<string, File>, seriesId: string): Promise<{ success: boolean; error?: string }> {
     try {
       // 解析 record JSON
       const recordText = await recordFile.text()
