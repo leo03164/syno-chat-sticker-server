@@ -4,6 +4,7 @@ import {
   getStickerFileController,
   uploadStickersToMinIOController
 } from '../modules/sticker/sticker.controller';
+import { FileUploadValidatorMiddleware } from '../middleware/file-upload-validator.middleware';
 
 export const stickerRoute = new Elysia({ prefix: '/stickers' })
   .get('/', getStickersController, {
@@ -19,6 +20,7 @@ export const stickerRoute = new Elysia({ prefix: '/stickers' })
     })
   })
   .post('/upload/hackmd', uploadStickersToMinIOController, {
+    beforeHandle: FileUploadValidatorMiddleware.validateFileUpload,
     body: t.Object({
       record: t.File(),
       files: t.Array(t.File())

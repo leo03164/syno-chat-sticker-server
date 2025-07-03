@@ -55,12 +55,6 @@ export const uploadStickersToMinIOController = async ({ body, set }: Context): P
   try {
     const uploadBody = body as BatchUploadBody;
     
-    const recordFile = uploadBody.record;
-    if (!recordFile) {
-      set.status = 400;
-      return { success: false, error: 'Missing record file' };
-    }
-
     // 將檔案陣列轉換為 Map
     const filesMap = Object.fromEntries(
       uploadBody.files.map(file => [file.name, file])
@@ -69,7 +63,7 @@ export const uploadStickersToMinIOController = async ({ body, set }: Context): P
     const seriesService = new SeriesService();
     const series = await seriesService.createSeries();
 
-    const result = await stickerService.uploadStickersToMinIO(recordFile, filesMap, series.id);
+    const result = await stickerService.uploadStickersToMinIO(uploadBody.record, filesMap, series.id);
     if (!result.success) {
       set.status = 400;
       return result;
@@ -79,7 +73,12 @@ export const uploadStickersToMinIOController = async ({ body, set }: Context): P
     return { success: true };
   } catch (err) {
     console.error('Error in uploadStickersController:', err);
-    set.status = 500;
+    
+    // 如果 middleware 已經設置了狀態碼，保持該狀態碼
+    if (set.status === 200) {
+      set.status = 500;
+    }
+    
     return { success: false, error: err.message || 'Failed to upload stickers to MinIO' };
   }
 };
