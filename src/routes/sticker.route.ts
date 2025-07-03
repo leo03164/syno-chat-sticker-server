@@ -1,9 +1,8 @@
 import { Elysia, t } from 'elysia';
 import { 
   getStickersController,
-  uploadStickersController,
   getStickerFileController,
-  uploadStickersToHackMDController
+  uploadStickersToMinIOController
 } from '../modules/sticker/sticker.controller';
 
 export const stickerRoute = new Elysia({ prefix: '/stickers' })
@@ -13,18 +12,13 @@ export const stickerRoute = new Elysia({ prefix: '/stickers' })
       stickerId: t.Optional(t.String())
     })
   })
-  .get('/:id', getStickerFileController, {
+  .get('/:seriesId/:stickerId', getStickerFileController, {
     params: t.Object({
-      id: t.String()
+      seriesId: t.String(),
+      stickerId: t.String()
     })
   })
-  .post('/upload', uploadStickersController, {
-    body: t.Object({
-      record: t.File(),
-      files: t.Array(t.File())
-    })
-  })
-  .post('/upload/hackmd', uploadStickersToHackMDController, {
+  .post('/upload/hackmd', uploadStickersToMinIOController, {
     body: t.Object({
       record: t.File(),
       files: t.Array(t.File())

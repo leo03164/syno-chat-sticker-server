@@ -22,7 +22,7 @@ const minioClient = new Client({
   secretKey: MINIO_SECRET_KEY,
 })
 
-export class HackmdService {
+export class MinIOService {
   static async uploadImage(image: File): Promise<{ link: string }> {
     // 將 File 轉成 Buffer
     const arrayBuffer = await image.arrayBuffer()
@@ -50,38 +50,20 @@ export class HackmdService {
     return await response.json()
   }
 
-  static async uploadImageByMinIO(image: File, hash: string): Promise<{ link: string }> {
+  static async uploadImageByMinIO(image: File, hash: string, seriesId: string): Promise<{ link: string }> {
     try {
       // 將 File 轉成 Buffer
       const arrayBuffer = await image.arrayBuffer()
       const buffer = Buffer.from(arrayBuffer)
 
-      // 使用傳入的 hash 作為檔案名稱，固定 .png 副檔名
-      const fileName = `stickers/${hash}.png`
+      // 使用 seriesId 作為資料夾名稱，hash 作為檔案名稱
+      const fileName = `stickers/${seriesId}/${hash}.png`
 
       // 確保 bucket 存在
       const bucketExists = await minioClient.bucketExists(MINIO_BUCKET_NAME)
       if (!bucketExists) {
         await minioClient.makeBucket(MINIO_BUCKET_NAME, 'us-east-1')
         console.log(`Bucket '${MINIO_BUCKET_NAME}' 已建立`)
-      }
-
-      // 設定 bucket 為公開讀取
-      try {
-        await minioClient.setBucketPolicy(MINIO_BUCKET_NAME, JSON.stringify({
-          Version: '2012-10-17',
-          Statement: [
-            {
-              Effect: 'Allow',
-              Principal: { AWS: ['*'] },
-              Action: ['s3:GetObject'],
-              Resource: [`arn:aws:s3:::${MINIO_BUCKET_NAME}/*`]
-            }
-          ]
-        }))
-        console.log(`Bucket '${MINIO_BUCKET_NAME}' 已設定為公開讀取`)
-      } catch (policyError) {
-        console.warn('設定 bucket 政策時發生警告:', policyError)
       }
 
       // 上傳檔案到 MinIO
@@ -95,14 +77,32 @@ export class HackmdService {
         }
       )
 
-      // 生成永久的公開 URL
-      const protocol = MINIO_USE_SSL ? 'https' : 'http'
-      const publicUrl = `${protocol}://${MINIO_ENDPOINT}:${MINIO_PORT}/${MINIO_BUCKET_NAME}/${fileName}`
-
-      return { link: publicUrl }
+      // 回傳 API GET Image 的 URL
+      return { link: `https://${process.env.DOMAIN}/stickers/${seriesId}/${hash}` }
     } catch (error) {
       console.error('MinIO 上傳失敗:', error)
       throw new Error(`MinIO 上傳失敗: ${error instanceof Error ? error.message : '未知錯誤'}`)
+    }
+  }
+
+  static async getImageFromMinIO(params: { stickerId: string, seriesId: string }): Promise<Buffer> {
+    try {
+      const { stickerId, seriesId } = params
+      const fileName = `stickers/${seriesId}/${stickerId}.png`
+
+      // 從 MinIO 獲取檔案
+      const dataStream = await minioClient.getObject(MINIO_BUCKET_NAME, fileName)
+      
+      // 將 stream 轉換為 Buffer
+      const chunks: Buffer[] = []
+      return new Promise((resolve, reject) => {
+        dataStream.on('data', (chunk) => chunks.push(chunk))
+        dataStream.on('end', () => resolve(Buffer.concat(chunks)))
+        dataStream.on('error', (error) => reject(error))
+      })
+    } catch (error) {
+      console.error('從 MinIO 獲取圖片失敗:', error)
+      throw new Error(`從 MinIO 獲取圖片失敗: ${error instanceof Error ? error.message : '未知錯誤'}`)
     }
   }
 } 
