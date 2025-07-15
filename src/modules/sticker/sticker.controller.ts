@@ -32,17 +32,34 @@ export const getStickersController = async ({ query, set }: Context): Promise<St
   }
 }
 
-export const getStickerFileController = async ({ params, set }: Context) => {
+export const getStickerFileController = async ({ params, set, request }: Context) => {
   try {    
     const { seriesId, stickerId } = params;
     const fileBuffer = await MinIOService.getImageFromMinIO({ stickerId, seriesId })
     
-    set.headers['Content-Type'] = 'image/png'
+    // 使用 stickerId 作為 ETag，因為貼圖檔案內容不會改變
+    // stickerId 本身就是檔案的 SHA-256 hash，所以可以直接使用
+    const etag = `"${stickerId}"`;
     
-    return new Response(fileBuffer)
+    // 檢查客戶端是否提供了 If-None-Match 標頭
+    const ifNoneMatch = request.headers.get('if-none-match');
+    
+    // 如果 ETag 匹配，回傳 304 Not Modified
+    if (ifNoneMatch === etag) {
+      set.status = 304;
+      return new Response(null, { status: 304 });
+    }
+    
+    // 設定快取相關標頭
+    set.headers['Content-Type'] = 'image/png';
+    set.headers['ETag'] = etag;
+    set.headers['Cache-Control'] = 'public, max-age=31536000, immutable'; // 快取一年
+    set.headers['Last-Modified'] = new Date().toUTCString();
+    
+    return new Response(fileBuffer);
   } catch (err) {
-    set.status = 500
-    return { success: false, error: err.message || 'Failed to fetch sticker file' }
+    set.status = 500;
+    return { success: false, error: err.message || 'Failed to fetch sticker file' };
   }
 }
 
