@@ -35,7 +35,6 @@ export const getStickersController = async ({ query, set }: Context): Promise<St
 export const getStickerFileController = async ({ params, set, request }: Context) => {
   try {    
     const { seriesId, stickerId } = params;
-    const fileBuffer = await MinIOService.getImageFromMinIO({ stickerId, seriesId })
     
     // 使用 stickerId 作為 ETag，因為貼圖檔案內容不會改變
     // stickerId 本身就是檔案的 SHA-256 hash，所以可以直接使用
@@ -50,6 +49,12 @@ export const getStickerFileController = async ({ params, set, request }: Context
       return new Response(null, { status: 304 });
     }
     
+    // 檢查檔案是否存在於 MinIO（如果不存在會拋出錯誤）
+    await MinIOService.checkImageExists({ stickerId, seriesId });
+    
+    // 只有在檔案存在且 ETag 不匹配時才下載檔案
+    const fileBuffer = await MinIOService.getImageFromMinIO({ stickerId, seriesId });
+    
     // 設定快取相關標頭
     set.headers['Content-Type'] = 'image/png';
     set.headers['ETag'] = etag;
@@ -58,6 +63,12 @@ export const getStickerFileController = async ({ params, set, request }: Context
     
     return new Response(fileBuffer);
   } catch (err) {
+    // 如果是檔案不存在的錯誤，回傳 404
+    if (err.message && err.message.includes('statObject')) {
+      set.status = 404;
+      return { success: false, error: 'Sticker file not found' };
+    }
+    
     set.status = 500;
     return { success: false, error: err.message || 'Failed to fetch sticker file' };
   }

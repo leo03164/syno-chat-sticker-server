@@ -76,4 +76,12 @@ export class MinIOService {
       throw new Error(`從 MinIO 獲取圖片失敗: ${error instanceof Error ? error.message : '未知錯誤'}`)
     }
   }
+
+  static async checkImageExists(params: { stickerId: string, seriesId: string }): Promise<void> {
+    const { stickerId, seriesId } = params
+    const fileName = `stickers/${seriesId}/${stickerId}.png`
+
+    // 使用 statObject 檢查檔案是否存在，這比下載檔案更輕量
+    await minioClient.statObject(MINIO_BUCKET_NAME, fileName)
+  }
 } 
