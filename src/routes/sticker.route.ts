@@ -42,14 +42,3 @@ export const stickerRoute = new Elysia({ prefix: '/stickers' })
       files: t.Array(t.File())
     })
   })
-  // @deprecated use /upload instead
-  .post('/upload/hackmd', uploadStickersToMinIOController, {
-    beforeHandle: [
-      RateLimiterMiddleware.createRateLimiterForEndpoint('upload'),
-      FileUploadValidatorMiddleware.validateFileUpload
-    ],
-    body: t.Object({
-      record: t.File(),
-      files: t.Array(t.File())
-    })
-  });
