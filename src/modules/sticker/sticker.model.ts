@@ -1,6 +1,6 @@
 import { t } from 'elysia'
-import { stickers } from '../db/schema'
-import { ApiResponse } from '../types'
+import { stickers } from '../../db/schema'
+import { ApiResponse } from '../../types'
 
 // Schema 定義
 export type Sticker = typeof stickers.$inferSelect

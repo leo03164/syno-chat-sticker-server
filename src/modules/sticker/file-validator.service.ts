@@ -1,4 +1,4 @@
-import { StickerRecord } from '../types'
+import { StickerRecord } from '../../types'
 
 export class FileValidatorService {
   static validateFiles(records: StickerRecord[], filesMap: Record<string, File>): { isValid: boolean; error?: string } {
