@@ -4,7 +4,6 @@ import { eq, and, SQL } from 'drizzle-orm'
 import { Sticker } from './sticker.model'
 import { createHash } from 'crypto'
 import { StickerRecord } from '../../types'
-import { FileValidatorService } from './file-validator.service'
 import { MinIOService } from './minio.service'
 
 export class StickerService {
@@ -23,34 +22,28 @@ export class StickerService {
   // 批次上傳貼圖到 MinIO
   async uploadStickersToMinIO(recordFile: File, filesMap: Record<string, File>, seriesId: string): Promise<{ success: boolean; error?: string }> {
     try {
-      // 解析 record JSON
-      const recordText = await recordFile.text()
-      const records: StickerRecord[] = JSON.parse(recordText)
-
-      // 驗證檔案
-      const validationResult = FileValidatorService.validateFiles(records, filesMap)
-      if (!validationResult.isValid) {
-        return { success: false, error: validationResult.error }
-      }
+      // 解析 record JSON（middleware 已經驗證過格式）
+      const recordText = await recordFile.text();
+      const records: StickerRecord[] = JSON.parse(recordText);
 
       // 處理每個貼圖
       for (const record of records) {
-        const file = filesMap[record.file_name]!
-        const arrayBuffer = await file.arrayBuffer()
-        const buffer = Buffer.from(arrayBuffer)
-        const hash = createHash('sha256').update(buffer).digest('hex')
+        const file = filesMap[record.file_name]!;
+        const arrayBuffer = await file.arrayBuffer();
+        const buffer = Buffer.from(arrayBuffer);
+        const hash = createHash('sha256').update(buffer).digest('hex');
         
         // 上傳到 MinIO
-        const hackmdResult = await MinIOService.uploadImageByMinIO(file, hash, seriesId)
-        const path = hackmdResult.link
+        const uploadResult = await MinIOService.uploadImageByMinIO(file, hash, seriesId);
+        const path = uploadResult.link;
 
         // 檢查並創建 series（如果不存在）
-        let seriesRecord = await db.select().from(series).where(eq(series.id, seriesId))
+        let seriesRecord = await db.select().from(series).where(eq(series.id, seriesId));
         if (!seriesRecord[0]) {
           const newSeries = await db.insert(series).values({
             id: seriesId
-          }).returning()
-          seriesRecord = newSeries
+          }).returning();
+          seriesRecord = newSeries;
         }
 
         // 創建貼圖記錄
@@ -58,38 +51,38 @@ export class StickerService {
           stickerId: hash,
           path,
           seriesId: seriesRecord[0].id
-        })
+        });
 
         // 處理標籤
         if (record.tags && record.tags.length > 0) {
           for (const tagName of record.tags) {
             // 檢查標籤是否存在，不存在則創建
-            const existingTag = await db.select().from(tags).where(eq(tags.tagName, tagName))
-            let tagId: string
+            const existingTag = await db.select().from(tags).where(eq(tags.tagName, tagName));
+            let tagId: string;
 
             if (existingTag.length === 0) {
               const newTag = await db.insert(tags).values({
                 tagId: crypto.randomUUID(),
                 tagName
-              }).returning()
-              tagId = newTag[0].tagId
+              }).returning();
+              tagId = newTag[0].tagId;
             } else {
-              tagId = existingTag[0].tagId
+              tagId = existingTag[0].tagId;
             }
 
             // 建立貼圖和標籤的關聯
             await db.insert(stickerTags).values({
               stickerId: sticker.stickerId,
               tagId
-            })
+            });
           }
         }
       }
 
-      return { success: true }
+      return { success: true };
     } catch (error) {
-      console.error('Error uploading stickers to MinIO:', error)
-      return { success: false, error: error.message }
+      console.error('Error uploading stickers to MinIO:', error);
+      return { success: false, error: error.message };
     }
   }
 
